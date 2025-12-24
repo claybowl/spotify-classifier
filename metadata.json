@@ -1,0 +1,5 @@
+{
+  "name": "Taste Classifier",
+  "description": "An advanced music profile analyzer that transforms Spotify data into deep psychological insights and beautiful data visualizations using Gemini 3.",
+  "requestFramePermissions": []
+}
