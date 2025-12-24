@@ -1,9 +1,15 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { AnalysisResult, TrackData } from "../types";
 
 export const analyzeMusicTaste = async (tracks: TrackData[]): Promise<AnalysisResult> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+  const apiKey = (import.meta.env.VITE_GEMINI_API_KEY || (window as any).GEMINI_API_KEY) as string;
+  
+  if (!apiKey) {
+    throw new Error("API key not configured. Please set VITE_GEMINI_API_KEY in your .env file.");
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
   
   // Sample tracks to provide context
   const sampledTracks = tracks.slice(0, 60).map(t => `${t.artistName} - ${t.trackName}`).join(", ");
@@ -19,52 +25,54 @@ export const analyzeMusicTaste = async (tracks: TrackData[]): Promise<AnalysisRe
   6. complexityScore: A number 0-100 representing musical diversity.
   7. uniquenessScore: A number 0-100 representing how rare the taste is.`;
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: prompt,
-    config: {
+  const model = genAI.getGenerativeModel({
+    model: "gemini-2.0-flash",
+    generationConfig: {
       responseMimeType: "application/json",
       responseSchema: {
-        type: Type.OBJECT,
+        type: SchemaType.OBJECT,
         properties: {
-          classification: { type: Type.STRING },
-          summary: { type: Type.STRING },
+          classification: { type: SchemaType.STRING },
+          summary: { type: SchemaType.STRING },
           genres: {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             items: {
-              type: Type.OBJECT,
+              type: SchemaType.OBJECT,
               properties: {
-                name: { type: Type.STRING },
-                percentage: { type: Type.NUMBER }
+                name: { type: SchemaType.STRING },
+                percentage: { type: SchemaType.NUMBER }
               },
               required: ["name", "percentage"]
             }
           },
           moods: {
-            type: Type.ARRAY,
+            type: SchemaType.ARRAY,
             items: {
-              type: Type.OBJECT,
+              type: SchemaType.OBJECT,
               properties: {
-                label: { type: Type.STRING },
-                value: { type: Type.NUMBER }
+                label: { type: SchemaType.STRING },
+                value: { type: SchemaType.NUMBER }
               },
               required: ["label", "value"]
             }
           },
           vibeKeywords: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING }
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING }
           },
-          complexityScore: { type: Type.NUMBER },
-          uniquenessScore: { type: Type.NUMBER }
+          complexityScore: { type: SchemaType.NUMBER },
+          uniquenessScore: { type: SchemaType.NUMBER }
         },
         required: ["classification", "summary", "genres", "moods", "vibeKeywords", "complexityScore", "uniquenessScore"],
       },
     },
   });
 
+  const result = await model.generateContent(prompt);
+  
   try {
-    return JSON.parse(response.text.trim()) as AnalysisResult;
+    const text = result.response.text();
+    return JSON.parse(text.trim()) as AnalysisResult;
   } catch (error) {
     console.error("Failed to parse Gemini response:", error);
     throw new Error("Unable to decode the musical patterns. Please try a different data slice.");
