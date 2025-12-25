@@ -9,7 +9,15 @@ import Visualizations from './components/Visualizations';
 import { analyzeMusicTaste } from './services/geminiService';
 import { AnalysisResult, TrackData } from './types';
 
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/24c4b3a0-c0a1-495f-aab8-12afa7d3148c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:11',message:'App.tsx module loaded',data:{},hypothesisId:'C',sessionId:'debug-session'})}).catch(()=>{});
+// #endregion
+
 const App: React.FC = () => {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/24c4b3a0-c0a1-495f-aab8-12afa7d3148c',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:16',message:'App component RENDERING',data:{},hypothesisId:'C',sessionId:'debug-session'})}).catch(()=>{});
+  // #endregion
+  
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
